@@ -8,3 +8,9 @@ info_router = APIRouter()
 @info_router.get("/")
 async def get_hi():
     return {"message":"hello"}
+
+
+@info_router.get("/healthcheck")
+async def healthcheck():
+    return {"status": "OK"}
+    
