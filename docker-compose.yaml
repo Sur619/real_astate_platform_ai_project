@@ -3,7 +3,7 @@ version: "3.9"
 services:
   backend:
     build:
-      context: .  # Make sure this points to the directory containing your Dockerfile
+      context: .  
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -18,8 +18,8 @@ services:
     image: postgres:14.1-alpine
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres_real
+      - POSTGRES_PASSWORD=postgres_real
+      - POSTGRES_DB=postgres_real
     ports:
       - "5432:5432"

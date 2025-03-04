@@ -6,8 +6,12 @@ name = "pypi"
 [packages]
 uvicorn = "*"
 fastapi = "*"
-sqlalchemy = "*"
 exceptiongroup = "*"
+databases = "*"
+email-validator = "*"
+asyncpg = "*"
+alembic = "*"
+sqlalchemy = {extras = ["asyncio"], version = "*"}
 
 [dev-packages]
 
