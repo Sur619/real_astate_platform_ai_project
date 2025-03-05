@@ -1,19 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.db_models import User
-from app.pydantic_models import UserCreate
+from users.models import User
+from users.schema import UserCreate
 
 
 class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all_users(self):
+    async def get(self):
         query = select(User)
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_user_by_id(self, user_id: int):
+    async def get_by_id(self, user_id: int):
         query = select(User).where(User.id == user_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
@@ -26,7 +26,7 @@ class UserRepository:
         return new_user
 
     async def delete(self, user_id: int):
-        user = await self.get_user_by_id(user_id)
+        user = await self.get_by_id(user_id)
         if user:
             await self.db.delete(user)
             await self.db.commit()

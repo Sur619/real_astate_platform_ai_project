@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from logging.config import fileConfig
-from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy import pool
 
 # Подключаем настройки
@@ -9,7 +8,7 @@ config = context.config
 fileConfig(config.config_file_name)
 
 # Импортируем метадату моделей
-from app.db_models import Base  # Убедись, что путь правильный
+from users.models import Base  # Убедись, что путь правильный
 
 target_metadata = Base.metadata
 
