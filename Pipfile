@@ -12,6 +12,7 @@ email-validator = "*"
 asyncpg = "*"
 alembic = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
+pydantic-settings = "*"
 
 [dev-packages]
 

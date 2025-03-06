@@ -2,9 +2,10 @@ from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from databases import Database
+from configs.settings import Settings
 
-DATABASE_URL = "postgresql+asyncpg://postgres_real:postgres_real@localhost:5432/postgres_real"
+settings = Settings()
+DATABASE_URL = settings.database_url
 
 metadata = MetaData()
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -17,4 +18,11 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
-database = Database(DATABASE_URL)
+
+
+async def get_db() -> AsyncSession:
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        await session.close()

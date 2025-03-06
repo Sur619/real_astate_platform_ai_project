@@ -1,14 +1,13 @@
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, Depends
 from starlette import status
 
-from users.repositories import UserRepository
+from users.repositories import UserRepository, get_user_repository
 from users.schema import UserCreate
 
 
 class UserService:
-    def __init__(self, db: AsyncSession):
-        self.repo = UserRepository(db)
+    def __init__(self, repo: UserRepository):
+        self.repo = repo
 
     async def get(self):
         return await self.repo.get()
@@ -26,4 +25,8 @@ class UserService:
         user = await self.repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        return self.repo.delete(user_id)
+        await self.repo.delete(user_id)
+
+
+def get_user_service(repo: UserRepository = Depends(get_user_repository)):
+    return UserService(repo)
