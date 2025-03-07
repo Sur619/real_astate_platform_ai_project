@@ -4,4 +4,4 @@ stages:
 job1:
   stage: test
   script:
-    - echo "test! and another test text"
+    - echo "test ec2! and another test text"
