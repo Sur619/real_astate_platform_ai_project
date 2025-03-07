@@ -3,5 +3,7 @@ stages:
 
 job1:
   stage: test
+  tags:
+    - ec2-runner
   script:
     - echo "test ec2! and another test text"
