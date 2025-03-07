@@ -1,6 +1,6 @@
+from functools import lru_cache
 from fastapi import HTTPException, Depends
 from starlette import status
-
 from users.repositories import UserRepository, get_user_repository
 from users.schema import UserCreate
 
@@ -28,5 +28,6 @@ class UserService:
         await self.repo.delete(user_id)
 
 
+@lru_cache
 def get_user_service(repo: UserRepository = Depends(get_user_repository)):
     return UserService(repo)
