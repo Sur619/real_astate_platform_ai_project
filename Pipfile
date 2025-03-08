@@ -13,6 +13,7 @@ asyncpg = "*"
 alembic = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
 pydantic-settings = "*"
+debugpy = "*"
 
 [dev-packages]
 

@@ -1,10 +1,15 @@
 from fastapi import FastAPI, Request
 import uvicorn
 from starlette.responses import JSONResponse
+import debugpy  # 🔍 Добавляем debugpy
 
 from users.routes import user_router
 from sqlalchemy.ext.asyncio import AsyncSession
 from configs.db import engine, Base
+
+# 🔥 Подключаем debugpy для отладки
+debugpy.listen(("0.0.0.0", 5678))
+print("✅ Debugpy is listening on port 5678. Waiting for debugger to attach...")
 
 app = FastAPI()
 
@@ -13,7 +18,7 @@ app.include_router(user_router, prefix="/api", tags=["Users"])
 
 @app.on_event("startup")
 async def startup():
-    # Создаем таблицы в базе данных при запуске
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
