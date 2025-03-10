@@ -33,3 +33,24 @@ async def create_user(user: UserCreate, service: UserService = Depends(get_user_
 async def delete_user(user_id: int, service: UserService = Depends(get_user_service)):
     await service.delete(user_id)
     return {"message": "User deleted successfully"}
+
+
+from fastapi import APIRouter, Depends
+from users.schema import User, UserCreate
+from users.services import UserService, get_user_service
+from users.auth import get_current_user
+
+user_router = APIRouter()
+
+
+@user_router.get("/users/", response_model=list[User])
+async def get_users(
+    service: UserService = Depends(get_user_service),
+    current_user: User = Depends(get_current_user)  # Требуется токен для доступа
+):
+    return await service.get()
+
+
+@user_router.post("/users/", response_model=User)
+async def create_user(user: UserCreate, service: UserService = Depends(get_user_service)):
+    return await service.create(user)
