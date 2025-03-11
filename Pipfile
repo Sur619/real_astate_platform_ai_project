@@ -18,6 +18,9 @@ httpx = "*"
 pytest-asyncio = "*"
 passlib = "*"
 jose = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
+python-multipart = "*"
+bcrypt = "*"
 
 [dev-packages]
 

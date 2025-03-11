@@ -2,11 +2,13 @@ from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+import logging
 from configs.settings import Settings
 
 settings = Settings()
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+logger = logging.getLogger(__name__)
 
 
 def verify_password(plain_password, hashed_password):
@@ -29,5 +31,6 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         return payload.get("sub")
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT decode error: {e}")
         return None
