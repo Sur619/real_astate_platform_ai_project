@@ -34,3 +34,9 @@ def decode_access_token(token: str):
     except JWTError as e:
         logger.error(f"JWT decode error: {e}")
         return None
+
+
+def create_refresh_token(data: dict):
+    expires = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    data.update({"exp": expires})
+    return jwt.encode(data, settings.secret_key, algorithms=[settings.algorithm])

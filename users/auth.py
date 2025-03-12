@@ -1,11 +1,13 @@
 from datetime import timedelta
 import logging
+
+import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from users.repositories import UserRepository, get_user_repository
 from users.schema import Token
-from users.security import verify_password, create_access_token, decode_access_token
+from users.security import verify_password, create_access_token, decode_access_token, create_refresh_token
 from configs.settings import Settings
 
 auth_router = APIRouter()
@@ -25,7 +27,6 @@ async def login_for_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
         user_repo: UserRepository = Depends(get_user_repository)
 ):
-
     user = await user_repo.get_by_email(form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         logger.warning(f"Failed login attempt for user: {form_data.username}")
@@ -35,7 +36,37 @@ async def login_for_access_token(
         data={"sub": user.email},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(data={"sub": user.email})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "refresh_token": refresh_token
+    }
+
+
+@auth_router.post("/refresh", response_model=Token)
+async def refresh_access_token(token_data: Token):
+    try:
+        payload = jwt.decode(token_data.refresh_token, settings.secret_key, algorithms=[settings.algorithm])
+        email = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    access_token = create_access_token(
+        data={"sub": email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
+    new_refresh_token = create_refresh_token(data={"sub": email})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "refresh_token": new_refresh_token
+    }
 
 
 async def get_current_user(

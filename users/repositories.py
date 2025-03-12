@@ -18,7 +18,7 @@ class UserRepository:
         return result.scalars().all()
 
     async def get_by_id(self, user_id):
-        query = select(User).where(User.id == user_id)
+        query = select(User).where(User.user_id == user_id)
         result = await self.db_session.execute(query)
         return result.scalar_one_or_none()
 
