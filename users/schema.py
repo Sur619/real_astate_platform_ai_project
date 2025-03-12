@@ -21,7 +21,7 @@ class UserCreate(UserBase):
 
 
 class ShowUser(UserBase):
-    id: uuid.UUID
+    user_id: uuid.UUID
     is_active: bool
 
     class Config:

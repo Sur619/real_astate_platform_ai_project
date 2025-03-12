@@ -16,11 +16,12 @@ pydantic-settings = "*"
 debugpy = "*"
 httpx = "*"
 pytest-asyncio = "*"
-passlib = "*"
 jose = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 python-multipart = "*"
 bcrypt = "*"
+pyjwt = "*"
+passlib = {extras = ["bcrypt"], version = "*"}
 
 [dev-packages]
 

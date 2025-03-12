@@ -16,11 +16,16 @@ settings = Settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
+class LoginSchema(OAuth2PasswordRequestForm):
+    email: str
+
+
 @auth_router.post("/login", response_model=Token)
 async def login_for_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
         user_repo: UserRepository = Depends(get_user_repository)
 ):
+
     user = await user_repo.get_by_email(form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         logger.warning(f"Failed login attempt for user: {form_data.username}")
