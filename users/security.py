@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
+import jwt
 import logging
 from configs.settings import Settings
 
@@ -31,7 +32,10 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         return payload.get("sub")
-    except JWTError as e:
+    except ExpiredSignatureError:
+        logger.error("JWT decode error: Token expired")
+        return None
+    except InvalidTokenError as e:
         logger.error(f"JWT decode error: {e}")
         return None
 
@@ -39,4 +43,4 @@ def decode_access_token(token: str):
 def create_refresh_token(data: dict):
     expires = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
     data.update({"exp": expires})
-    return jwt.encode(data, settings.secret_key, algorithms=[settings.algorithm])
+    return jwt.encode(data, settings.secret_key, algorithm=settings.algorithm)

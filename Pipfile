@@ -17,11 +17,10 @@ debugpy = "*"
 httpx = "*"
 pytest-asyncio = "*"
 jose = "*"
-python-jose = {extras = ["cryptography"], version = "*"}
 python-multipart = "*"
 bcrypt = "*"
-pyjwt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
+pyjwt = "*"
 
 [dev-packages]
 

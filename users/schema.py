@@ -1,6 +1,8 @@
 import re
 import uuid
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr
+from pydantic.v1 import validator
+from typing import Optional
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 
@@ -32,4 +34,9 @@ class ShowUser(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    refresh_token: str
+    refresh_token: Optional[str] = None
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
