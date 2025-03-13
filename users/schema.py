@@ -1,17 +1,42 @@
-from pydantic import BaseModel
+import re
+import uuid
+from pydantic import BaseModel, EmailStr
+from pydantic.v1 import validator
+from typing import Optional
+
+LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 
 
 class UserBase(BaseModel):
     name: str
-    email: str
+    email: EmailStr
+
+    @validator("name")
+    def validate_name(cls, value):
+        if not LETTER_MATCH_PATTERN.match(value):
+            raise ValueError("Name should contain only letters")
+        return value
 
 
 class UserCreate(UserBase):
     password: str
 
 
-class User(UserBase):
-    id: int
+class ShowUser(UserBase):
+    user_id: uuid.UUID
+    is_active: bool
 
     class Config:
         from_attributes = True
+        arbitrary_types_allowed = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    refresh_token: Optional[str] = None
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str

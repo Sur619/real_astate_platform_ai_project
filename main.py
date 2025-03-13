@@ -4,21 +4,22 @@ from starlette.responses import JSONResponse
 import debugpy  # 🔍 Добавляем debugpy
 
 from users.routes import user_router
-from sqlalchemy.ext.asyncio import AsyncSession
+from users.auth import auth_router
+
 from configs.db import engine, Base
 
 # 🔥 Подключаем debugpy для отладки
-debugpy.listen(("0.0.0.0", 5678))
+debugpy.listen(("0.0.0.0", 5679))
 print("✅ Debugpy is listening on port 5678. Waiting for debugger to attach...")
 
 app = FastAPI()
 
 app.include_router(user_router, prefix="/api", tags=["Users"])
+app.include_router(auth_router, prefix="/api", tags=["Auth"])
 
 
 @app.on_event("startup")
 async def startup():
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

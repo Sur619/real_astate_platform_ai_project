@@ -12,7 +12,7 @@ class UserService:
     async def get(self):
         return await self.repo.get()
 
-    async def get_by_id(self, user_id: int):
+    async def get_by_id(self, user_id):  # Remove type annotation
         user = await self.repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -21,11 +21,11 @@ class UserService:
     async def create(self, user: UserCreate):
         return await self.repo.create(user)
 
-    async def delete(self, user_id: int):
+    async def delete(self, user_id):  # Remove type annotation
         user = await self.repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        await self.repo.delete(user_id)
+        return await self.repo.delete(user_id)
 
 
 @lru_cache

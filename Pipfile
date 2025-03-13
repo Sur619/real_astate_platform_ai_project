@@ -14,6 +14,13 @@ alembic = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
 pydantic-settings = "*"
 debugpy = "*"
+httpx = "*"
+pytest-asyncio = "*"
+jose = "*"
+python-multipart = "*"
+bcrypt = "*"
+passlib = {extras = ["bcrypt"], version = "*"}
+pyjwt = "*"
 
 [dev-packages]
 
