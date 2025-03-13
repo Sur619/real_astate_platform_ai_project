@@ -38,7 +38,7 @@ class RefreshTokenRequest(BaseModel):
 
 @auth_router.post("/login", response_model=LoginResponse)
 async def login_for_access_token(
-        form_data: LoginSchema = Depends(),
+        form_data: OAuth2PasswordRequestForm = Depends(),
         user_repo: UserRepository = Depends(get_user_repository)
 ):
     user = await user_repo.get_by_email(form_data.username)
