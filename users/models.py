@@ -1,8 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, Boolean, DateTime, func, select
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from configs.db import Base
 
 
