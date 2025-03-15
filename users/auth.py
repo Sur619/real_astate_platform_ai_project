@@ -20,11 +20,6 @@ settings = Settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
-class LoginSchema(BaseModel):
-    username: str
-    password: str
-
-
 class RefreshTokenRequest(BaseModel):
     refresh_token: str = None
     access_token: str = None
@@ -85,17 +80,17 @@ async def refresh_access_token(token_data: RefreshTokenRequest):
             detail="Invalid token"
         )
 
-    access_token = create_access_token(
-        data={"sub": email},
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
-    )
+    # access_token = create_access_token(
+    #     data={"sub": email},
+    #     expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    # )
 
     refresh_token = create_refresh_token(
         data={"sub": email}
     )
 
     return {
-        "access_token": access_token,
+        # "access_token": access_token,
         "token_type": "bearer",
         "refresh_token": refresh_token
     }

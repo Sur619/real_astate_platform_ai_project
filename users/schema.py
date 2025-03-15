@@ -32,7 +32,7 @@ class ShowUser(UserBase):
 
 
 class Token(BaseModel):
-    access_token: str
+    # access_token: str
     token_type: str
     refresh_token: Optional[str] = None
 
