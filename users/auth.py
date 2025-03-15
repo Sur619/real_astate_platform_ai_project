@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from pydantic.v1 import validator
 
+from users.exceptions import InvalidCredentialsException, InvalidTokenException
 from users.repositories import UserRepository, get_user_repository
 from users.schema import Token, LoginResponse
 from users.security import verify_password, create_access_token, decode_access_token, create_refresh_token
@@ -39,7 +40,7 @@ async def login_for_access_token(
     user = await user_repo.get_by_email(form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         logger.warning(f"Failed login attempt for user: {form_data.username}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+        raise InvalidCredentialsException()
 
     access_token = create_access_token(
         data={"sub": user.email},
@@ -65,20 +66,13 @@ async def refresh_access_token(token_data: RefreshTokenRequest):
         payload = jwt.decode(refresh_token, settings.secret_key, algorithms=[settings.algorithm])
         email = payload.get("sub")
         if email is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
+            raise InvalidTokenException()
+
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired"
-        )
+        raise InvalidTokenException()
+
     except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
+        raise InvalidTokenException()
 
     # access_token = create_access_token(
     #     data={"sub": email},
