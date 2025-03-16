@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 settings = Settings()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 
 class RefreshTokenRequest(BaseModel):
