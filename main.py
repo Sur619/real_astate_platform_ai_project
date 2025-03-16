@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Request
 import uvicorn
 from starlette.responses import JSONResponse
-import debugpy  # 🔍 Добавляем debugpy
-
+import debugpy
+from sqlalchemy.ext.asyncio import AsyncSession
+from configs.db import engine, Base, get_db
 from users.routes import user_router
 from users.auth import auth_router
+from users.models import Group
+from sqlalchemy.future import select
 
-from configs.db import engine, Base
-
-# 🔥 Подключаем debugpy для отладки
 debugpy.listen(("0.0.0.0", 5679))
 print("✅ Debugpy is listening on port 5678. Waiting for debugger to attach...")
 
@@ -18,15 +18,32 @@ app.include_router(user_router, prefix="/api", tags=["Users"])
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
 
 
+async def seed_groups(db: AsyncSession):
+    existing_groups = await db.execute(select(Group).where(Group.name.in_(["admin", "customer"])))
+    existing_groups = {group.name for group in existing_groups.scalars().all()}
+
+    new_groups = []
+    if "admin" not in existing_groups:
+        new_groups.append(Group(name="admin"))
+    if "customer" not in existing_groups:
+        new_groups.append(Group(name="customer"))
+
+    if new_groups:
+        db.add_all(new_groups)
+        await db.commit()
+
+
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+    async with AsyncSession(engine) as session:
+        await seed_groups(session)
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Для отладки - выводит информацию о любых непойманных исключениях
     import traceback
     error_detail = str(exc)
     error_trace = traceback.format_exc()

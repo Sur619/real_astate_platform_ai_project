@@ -11,7 +11,6 @@ DATABASE_URL = settings.database_url
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in environment variables")
 
-
 engine = create_async_engine(
     DATABASE_URL,
     future=True,
@@ -19,12 +18,12 @@ engine = create_async_engine(
     execution_options={"isolation_level": "AUTOCOMMIT"}
 )
 
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
-    class_=AsyncSession
+    class_=AsyncSession,
+    expire_on_commit=False
 )
 
 

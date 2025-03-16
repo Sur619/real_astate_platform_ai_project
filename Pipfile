@@ -21,6 +21,7 @@ python-multipart = "*"
 bcrypt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 pyjwt = "*"
+starlette-admin = "*"
 
 [dev-packages]
 

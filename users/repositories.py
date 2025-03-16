@@ -2,9 +2,10 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from configs.db import get_db
-from users.models import User
+from users.models import User, Group, UserGroup
 from users.schema import UserCreate
 from users.security import get_password_hash
+from sqlalchemy.orm import joinedload, selectinload
 
 
 class UserRepository:
@@ -17,14 +18,14 @@ class UserRepository:
         return result.scalars().all()
 
     async def get_by_id(self, user_id):
-        query = select(User).where(User.user_id == user_id)
+        query = select(User).options(joinedload(User.groups)).where(User.user_id == user_id)
         result = await self.db_session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str):
-        query = select(User).where(User.email == email)
+        query = select(User).options(selectinload(User.groups)).where(User.email == email)
         result = await self.db_session.execute(query)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def create(self, user: UserCreate):
         hashed_password = get_password_hash(user.password)
@@ -36,8 +37,19 @@ class UserRepository:
         )
 
         self.db_session.add(new_user)
+        await self.db_session.flush()
+
+        # Explicitly refresh the user object to include relationships
+        await self.db_session.refresh(new_user, ["groups"])
+
+        customer_group = await self.db_session.execute(select(Group).where(Group.name == "customer"))
+        customer_group = customer_group.scalar_one_or_none()
+
+        if customer_group:
+            user_group = UserGroup(user_id=new_user.user_id, group_id=customer_group.group_id)
+            self.db_session.add(user_group)
+
         await self.db_session.commit()
-        await self.db_session.refresh(new_user)
         return new_user
 
     async def delete(self, user_id):

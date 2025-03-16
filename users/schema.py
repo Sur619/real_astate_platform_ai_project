@@ -22,9 +22,15 @@ class UserCreate(UserBase):
     password: str
 
 
+class GroupSchema(BaseModel):
+    group_id: uuid.UUID
+    name: str
+
+
 class ShowUser(UserBase):
     user_id: uuid.UUID
     is_active: bool
+    groups: list[GroupSchema] = []
 
     class Config:
         from_attributes = True
