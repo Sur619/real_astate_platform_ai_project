@@ -3,10 +3,12 @@ import uvicorn
 from starlette.responses import JSONResponse
 import debugpy
 from sqlalchemy.ext.asyncio import AsyncSession
-from configs.db import engine, Base, get_db
+from starlette_admin.contrib.sqla import Admin, ModelView
+
+from configs.db import engine, Base
 from users.routes import user_router
 from users.auth import auth_router
-from users.models import Group
+from users.models import Group, User, UserGroup
 from sqlalchemy.future import select
 
 debugpy.listen(("0.0.0.0", 5679))
@@ -16,6 +18,13 @@ app = FastAPI()
 
 app.include_router(user_router, prefix="/api", tags=["Users"])
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
+
+admin = Admin(engine, title="Example: SQLAlchemy")
+admin.add_view(ModelView(User))
+admin.add_view(ModelView(UserGroup))
+admin.add_view(ModelView(Group))
+
+admin.mount_to(app)
 
 
 async def seed_groups(db: AsyncSession):
