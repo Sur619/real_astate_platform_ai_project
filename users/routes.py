@@ -9,6 +9,11 @@ from users.auth import get_current_user
 user_router = APIRouter()
 
 
+@user_router.get("/health")
+async def health_check():
+    return {"status": 200, "message": "OK"}
+
+
 @user_router.get("/users/", response_model=list[ShowUser])
 async def get_users(
         service: UserService = Depends(get_user_service),
