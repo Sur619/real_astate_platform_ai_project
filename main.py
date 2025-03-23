@@ -19,11 +19,10 @@ app = FastAPI()
 app.include_router(user_router, prefix="/api", tags=["Users"])
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
 
-admin = Admin(engine, title="Example: SQLAlchemy")
+admin = Admin(engine, title="Admin Panel")
 admin.add_view(ModelView(User))
 admin.add_view(ModelView(UserGroup))
 admin.add_view(ModelView(Group))
-
 admin.mount_to(app)
 
 

@@ -5,23 +5,26 @@ name = "pypi"
 
 [packages]
 uvicorn = "*"
-fastapi = "*"
 exceptiongroup = "*"
 databases = "*"
 email-validator = "*"
 asyncpg = "*"
 alembic = "*"
-sqlalchemy = {extras = ["asyncio"], version = "*"}
 pydantic-settings = "*"
 debugpy = "*"
-httpx = "*"
-pytest-asyncio = "*"
 jose = "*"
 python-multipart = "*"
 bcrypt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 pyjwt = "*"
 starlette-admin = "*"
+fastapi = {extras = ["all"], version = "*"}
+pytest = "*"
+pytest-asyncio = "*"
+httpx = "*"
+sqlalchemy = "*"
+pytest-mock = "*"
+pytest-postgresql = "*"
 
 [dev-packages]
 
