@@ -1,29 +1,40 @@
-import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from configs.db import Base
+from main import app
+from users.repositories import get_db  # або правильний шлях до get_db
 
-DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/testdb"
+# Налаштування тестової бази (SQLite в пам’яті або твій власний PostgreSQL)
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-@pytest.fixture
-async def db_session():
-    # Создаем асинхронный движок для базы данных
-    engine = create_async_engine(DATABASE_URL, echo=True)
+engine_test = create_async_engine(TEST_DATABASE_URL, echo=False)
+async_session_maker = async_sessionmaker(engine_test, expire_on_commit=False)
 
-    # Создаем sessionmaker с AsyncSession
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-    # Создаем все таблицы для тестов
-    async with engine.begin() as conn:
+# Фікстура для створення бази перед тестами
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def prepare_database():
+    async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    # Создаем сессию для тестов
-    session = async_session()
-    yield session  # Возвращаем сессию для использования в тестах
-
-    # Закрываем сессию
-    await session.close()
-
-    # Очищаем базу данных после тестов (удаляем все таблицы)
-    async with engine.begin() as conn:
+    yield
+    async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+# 👉 Основна фікстура для сесії (ось той db_session, що шукає pytest)
+@pytest_asyncio.fixture()
+async def db_session():
+    async with async_session_maker() as session:
+        yield session
+
+
+# 👉 Переозначення залежності get_db FastAPI
+@pytest_asyncio.fixture(autouse=True)
+async def override_get_db(db_session):
+    async def _get_db_override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _get_db_override
+    yield
+    app.dependency_overrides.clear()

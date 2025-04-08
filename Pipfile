@@ -14,7 +14,6 @@ pydantic-settings = "*"
 debugpy = "*"
 jose = "*"
 python-multipart = "*"
-bcrypt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 pyjwt = "*"
 starlette-admin = "*"
@@ -25,6 +24,8 @@ httpx = "*"
 sqlalchemy = "*"
 pytest-mock = "*"
 pytest-postgresql = "*"
+bcrypt = "==4.0.1"
+aiosqlite = "*"
 
 [dev-packages]
 

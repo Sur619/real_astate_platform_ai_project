@@ -13,14 +13,14 @@ class UserRepository:
         self.db_session = db
 
     async def get(self):
-        query = select(User)
+        query = select(User).options(selectinload(User.groups))
         result = await self.db_session.execute(query)
         return result.scalars().all()
 
     async def get_by_id(self, user_id):
         query = select(User).options(joinedload(User.groups)).where(User.user_id == user_id)
         result = await self.db_session.execute(query)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def get_by_email(self, email: str):
         query = select(User).options(selectinload(User.groups)).where(User.email == email)

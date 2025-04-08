@@ -1,11 +1,10 @@
 from datetime import timedelta
 import logging
-
-import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from pydantic.v1 import validator
+import jwt  # Add missing import
 
 from users.exceptions import InvalidCredentialsException, InvalidTokenException
 from users.repositories import UserRepository, get_user_repository
@@ -34,6 +33,7 @@ class RefreshTokenRequest(BaseModel):
 
 @auth_router.post("/login", response_model=LoginResponse)
 async def login_for_access_token(
+        response: Response,
         form_data: OAuth2PasswordRequestForm = Depends(),
         user_repo: UserRepository = Depends(get_user_repository)
 ):
@@ -47,6 +47,18 @@ async def login_for_access_token(
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
 
+    # Set the token as a cookie for browser access
+    secure_setting = getattr(settings, 'use_https', False)
+    response.set_cookie(
+        key="token",
+        value=access_token,
+        httponly=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        expires=settings.access_token_expire_minutes * 60,
+        samesite="lax",
+        secure=secure_setting  # Set to True in production with HTTPS
+    )
+
     return {
         "access_token": access_token,
         "token_type": "bearer"
@@ -54,13 +66,13 @@ async def login_for_access_token(
 
 
 @auth_router.post("/refresh", response_model=Token)
-async def refresh_access_token(token_data: RefreshTokenRequest):
+async def refresh_access_token(response: Response, token_data: RefreshTokenRequest):
     try:
         refresh_token = token_data.refresh_token
         if not refresh_token:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Token is required"
+                detail="Refresh token is required"
             )
 
         payload = jwt.decode(refresh_token, settings.secret_key, algorithms=[settings.algorithm])
@@ -74,17 +86,29 @@ async def refresh_access_token(token_data: RefreshTokenRequest):
     except jwt.InvalidTokenError:
         raise InvalidTokenException()
 
-    # access_token = create_access_token(
-    #     data={"sub": email},
-    #     expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
-    # )
+    access_token = create_access_token(
+        data={"sub": email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
 
     refresh_token = create_refresh_token(
         data={"sub": email}
     )
 
+    # Update the token cookie
+    secure_setting = getattr(settings, 'use_https', False)
+    response.set_cookie(
+        key="token",
+        value=access_token,
+        httponly=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        expires=settings.access_token_expire_minutes * 60,
+        samesite="lax",
+        secure=secure_setting  # Set to True in production with HTTPS
+    )
+
     return {
-        # "access_token": access_token,
+        "access_token": access_token,
         "token_type": "bearer",
         "refresh_token": refresh_token
     }
@@ -101,7 +125,7 @@ async def get_current_user(
 
     user = await user_repo.get_by_email(email)
     if user is None:
-        logger.warning(f"User not found for token: {token}")
+        logger.warning(f"User not found for token with email: {email}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     return user

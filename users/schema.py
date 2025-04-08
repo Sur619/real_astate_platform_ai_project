@@ -4,7 +4,8 @@ from pydantic import BaseModel, EmailStr
 from pydantic.v1 import validator
 from typing import Optional
 
-LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+# Update to allow spaces and apostrophes in names
+LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-\s']+$")
 
 
 class UserBase(BaseModel):
@@ -14,7 +15,7 @@ class UserBase(BaseModel):
     @validator("name")
     def validate_name(cls, value):
         if not LETTER_MATCH_PATTERN.match(value):
-            raise ValueError("Name should contain only letters")
+            raise ValueError("Name should contain only letters, spaces, hyphens, and apostrophes")
         return value
 
 
@@ -38,7 +39,7 @@ class ShowUser(UserBase):
 
 
 class Token(BaseModel):
-    # access_token: str
+    access_token: str  # Add missing field
     token_type: str
     refresh_token: Optional[str] = None
 
