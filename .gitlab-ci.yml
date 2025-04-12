@@ -1,9 +1,23 @@
 stages:
-  - test
+  - pull-project
+  - build-backend
 
-job1:
-  stage: test
-  tags:
-    - ec2-runner
+
+pull-project:
+  stage: pull-project
   script:
-    - echo "test ec2! and another test text"
+    - echo "Pulling project from git"
+    - git pull origin main
+  only:
+    - main
+
+
+build-backend:
+  stage: build-backend
+  script:
+    - echo "Building backend"
+    - docker compose -f docker-compose.yml up --build --remove-orphans -d
+  only:
+    - main
+  dependencies:
+    - pull-project
