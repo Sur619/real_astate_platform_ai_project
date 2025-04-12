@@ -14,28 +14,20 @@ from sqlalchemy.future import select
 from starlette_admin.contrib.sqla import Admin, ModelView
 from configs.settings import Settings
 
+app = FastAPI()
 settings = Settings()
 
-# 🎯 Увімкнути відладку, якщо debug=True
-if getattr(settings, 'debug', False):
-    debugpy.listen(("0.0.0.0", 5679))
-    print("✅ Debugpy is listening on port 5679. Waiting for debugger to attach...")
-
-app = FastAPI()
-
-# 🔗 Підключення роутерів
+# Роутери
 app.include_router(user_router, prefix="/api", tags=["Users"])
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
 
-# ⚙️ Адмін панель
+# Адмінка
 admin = Admin(engine, title="Admin Panel")
 admin.add_view(ModelView(Group))
-
-# 🔐 Middleware для захисту адмінки
-app.add_middleware(AdminAuthMiddleware)
-
-# ⛓️ Прив’язати адмінку до FastAPI
 admin.mount_to(app)
+
+# Middleware
+app.add_middleware(AdminAuthMiddleware)
 
 
 # 🧪 Seed початкових груп (admin, customer)
@@ -88,5 +80,15 @@ async def admin_login_page(request: Request):
 
 
 # 🚀 Запуск
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False,  # 👈 ОЦЕ головне для дебагу!
+        log_level="debug"
+    )
