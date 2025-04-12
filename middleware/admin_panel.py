@@ -13,6 +13,7 @@ from users.auth import decode_access_token
 
 class AdminAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        print(f"📡 Incoming request: {request.url.path}")
         # Перевіряємо, чи це /admin
         if request.url.path.startswith("/admin"):
             token = None
