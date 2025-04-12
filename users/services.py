@@ -1,52 +1,56 @@
-from functools import lru_cache
-from fastapi import HTTPException, Depends
-from starlette import status
+from fastapi import Depends
 import logging
-
 from users.exceptions import UserNotFoundException, UserAlreadyExistsException
-from users.repositories import UserRepository, get_user_repository
 from users.schema import UserCreate
-from users.security import verify_password
+from users.security import verify_password, get_password_hash
+from users.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
+from configs.db import get_db
 
 logger = logging.getLogger(__name__)
 
 
 class UserService:
-    def __init__(self, repo: UserRepository):
-        self.repo = repo
+    def __init__(self, uow: AbstractUnitOfWork):
+        self.uow = uow
 
     async def get(self):
-        return await self.repo.get()
+        async with self.uow:
+            return await self.uow.users.get()
 
     async def get_by_id(self, user_id):
-        user = await self.repo.get_by_id(user_id)
-        if not user:
-            raise UserNotFoundException(user_id)
-        return user
+        async with self.uow:
+            user = await self.uow.users.get_by_id(user_id)
+            if not user:
+                raise UserNotFoundException(user_id)
+            return user
 
     async def create(self, user: UserCreate):
-        existing_user = await self.repo.get_by_email(user.email)
-        if existing_user:
-            raise UserAlreadyExistsException(user.email)
-        return await self.repo.create(user)
+        async with self.uow:
+            existing_user = await self.uow.users.get_by_email(user.email)
+            if existing_user:
+                raise UserAlreadyExistsException(user.email)
+            user.password = get_password_hash(user.password)
+            return await self.uow.users.create(user)
 
     async def delete(self, user_id):
-        user = await self.repo.get_by_id(user_id)
-        if not user:
-            raise UserNotFoundException(user_id)
-        return await self.repo.delete(user_id)
+        async with self.uow:
+            user = await self.uow.users.get_by_id(user_id)
+            if not user:
+                raise UserNotFoundException(user_id)
+            return await self.uow.users.delete(user_id)
 
 
-# 👇 Окрема функція для автентифікації
-async def authenticate_user(email: str, password: str, user_repo: UserRepository):
-    user = await user_repo.get_by_email(email)
-    if not user:
-        return None
-    if not verify_password(password, user.password):
-        return None
-    return user
+async def authenticate_user(email: str, password: str, uow: AbstractUnitOfWork):
+    async with uow:
+        user = await uow.users.get_by_email(email)
+        if not user or not verify_password(password, user.password):
+            return None
+        return user
 
 
-@lru_cache
-def get_user_service(repo: UserRepository = Depends(get_user_repository)):
-    return UserService(repo)
+def get_user_uow(session=Depends(get_db)) -> SqlAlchemyUnitOfWork:
+    return SqlAlchemyUnitOfWork(session_factory=lambda: session)
+
+
+def get_user_service(uow: AbstractUnitOfWork = Depends(get_user_uow)):
+    return UserService(uow)
