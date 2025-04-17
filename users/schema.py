@@ -1,6 +1,6 @@
 import re
 import uuid
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
 from pydantic.v1 import validator
 from typing import Optional
 
@@ -22,6 +22,16 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+    @field_validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if not re.search(r'[A-Za-z]', v):
+            raise ValueError('Password must contain at least one letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+
 
 class GroupSchema(BaseModel):
     group_id: uuid.UUID
@@ -32,6 +42,8 @@ class ShowUser(UserBase):
     user_id: uuid.UUID
     is_active: bool
     groups: list[GroupSchema] = []
+
+    avatar_url: Optional[HttpUrl]
 
     class Config:
         from_attributes = True
