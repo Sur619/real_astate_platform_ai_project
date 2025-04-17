@@ -27,13 +27,14 @@ class UserRepository:
         result = await self.db_session.execute(query)
         return result.unique().scalar_one_or_none()
 
-    async def create(self, user: UserCreate):
+    async def create(self, user: UserCreate, avatar_url: str = None):
         hashed_password = get_password_hash(user.password)
         new_user = User(
             name=user.name,
             email=user.email,
             password=hashed_password,
-            is_active=True
+            is_active=True,
+            avatar_url=avatar_url
         )
 
         self.db_session.add(new_user)

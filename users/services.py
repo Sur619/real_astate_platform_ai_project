@@ -1,10 +1,11 @@
-from fastapi import Depends
+from fastapi import Depends, UploadFile
 import logging
 from users.exceptions import UserNotFoundException, UserAlreadyExistsException
 from users.schema import UserCreate
 from users.security import verify_password, get_password_hash
 from users.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
 from configs.db import get_db
+from users.utils import upload_avatar_to_s3
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +25,16 @@ class UserService:
                 raise UserNotFoundException(user_id)
             return user
 
-    async def create(self, user: UserCreate):
+    async def create(self, user: UserCreate, avatar_file: UploadFile = None):
         async with self.uow:
             existing_user = await self.uow.users.get_by_email(user.email)
             if existing_user:
                 raise UserAlreadyExistsException(user.email)
             user.password = get_password_hash(user.password)
-            return await self.uow.users.create(user)
+            avatar_url = None
+            if avatar_file:
+                avatar_url = upload_avatar_to_s3(await avatar_file.read(), avatar_file.filename)
+            return await self.uow.users.create(user, avatar_url=avatar_url)
 
     async def delete(self, user_id):
         async with self.uow:

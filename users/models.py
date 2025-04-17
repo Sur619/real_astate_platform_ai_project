@@ -15,6 +15,8 @@ class User(Base):
     password = Column(String(255), nullable=False)
     is_active = Column(Boolean(), default=True)
 
+    avatar_url = Column(String, nullable=True)
+
     groups = relationship("Group", secondary="user_groups", backref="users")
 
 

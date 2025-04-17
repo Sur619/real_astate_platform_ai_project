@@ -1,7 +1,7 @@
 import uuid
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -41,9 +41,11 @@ async def get_user(
 @user_router.post("/users/", response_model=ShowUser)
 async def create_user(
         user: UserCreate,
-        service: UserService = Depends(get_user_service)
+        avatar: UploadFile = File(None),
+        service: UserService = Depends(get_user_service),
+
 ):
-    return await service.create(user)
+    return await service.create(user, avatar)
 
 
 @user_router.delete("/users/{user_id}")
