@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,17 +14,21 @@ class Settings(BaseSettings):
     debug: bool = False  # Add debug flag
     use_https: bool = False  # Add HTTPS flag for cookie security
 
-    aws_access_key: str
-    aws_secret_key: str
-    aws_region: str
-    aws_bucket_name: str
+    aws_access_key_id: str = Field(..., env="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = Field(..., env="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field(..., env="AWS_REGION")
+    aws_bucket_name: str = Field(..., env="AWS_BUCKET_NAME")
+    aws_avatar_folder: str = Field(default="avatars", env="AWS_AVATAR_FOLDER")
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
+    # model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.secret_key:
             raise ValueError("SECRET_KEY is required for JWT authentication")
+
+    class Config:
+        env_file = ".env"
 
 
 # admin_login.html (just the JavaScript part)
