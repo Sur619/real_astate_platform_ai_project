@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import Depends, UploadFile
 import logging
 from users.exceptions import UserNotFoundException, UserAlreadyExistsException
@@ -6,6 +8,8 @@ from users.security import verify_password, get_password_hash
 from users.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
 from configs.db import get_db
 from users.utils import upload_avatar_to_s3
+
+from users.aws_service import AWSS3Service
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +46,24 @@ class UserService:
             if not user:
                 raise UserNotFoundException(user_id)
             return await self.uow.users.delete(user_id)
+
+    async def upload_avatar(self, user_id: uuid.UUID, file: UploadFile, uow: AbstractUnitOfWork):
+        # Назва файлу: avatars/{uuid}.jpg
+        key = f"avatars/{user_id}.{file.filename.split('.')[-1]}"
+        content = await file.read()
+
+        # Завантаження в S3
+        url = await AWSS3Service.upload_file(key, content)
+
+        async with uow:
+            user = await uow.users.get_by_id(user_id)
+            if not user:
+                raise UserNotFoundException(user_id)
+
+            user.avatar_url = url
+            await uow.commit()
+
+        return url
 
 
 async def authenticate_user(email: str, password: str, uow: AbstractUnitOfWork):

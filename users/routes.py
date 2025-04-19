@@ -10,7 +10,8 @@ from configs.db import get_db
 from users.auth import get_current_user
 from users.models import User, Group, UserGroup
 from users.schema import ShowUser, UserCreate
-from users.services import UserService, get_user_service
+from users.services import UserService, get_user_service, get_user_uow
+from users.unit_of_work import AbstractUnitOfWork
 from users.utils import is_admin
 
 user_router = APIRouter()
@@ -92,3 +93,17 @@ async def make_user_admin(
     await db.commit()
 
     return {"message": f"User {user.name} has been made an admin"}
+
+
+# routes.py
+
+@user_router.post("/users/{user_id}/upload-avatar")
+async def upload_avatar(
+        user_id: UUID,
+        file: UploadFile = File(...),
+        uow: AbstractUnitOfWork = Depends(get_user_uow),
+        service: UserService = Depends(get_user_service),
+        current_user: ShowUser = Depends(get_current_user)
+):
+    url = await service.upload_avatar(user_id, file, uow)
+    return {"avatar_url": url}
