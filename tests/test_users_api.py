@@ -1,3 +1,5 @@
+import io
+
 import pytest
 import uuid
 from httpx import AsyncClient, ASGITransport
@@ -50,3 +52,35 @@ async def test_get_users_api_as_admin(db_session):
 
     assert response.status_code == 200
     assert any(user["email"] == "admin@example.com" for user in response.json())
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar(client: AsyncClient, db_session):
+    # Створюємо користувача
+    user = User(
+        user_id=uuid.uuid4(),
+        name="Avatar User",
+        email="avatar@example.com",
+        password="hashed-password",
+        is_active=True
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    # Створюємо токен
+    token = create_access_token({"sub": user.email})
+
+    # Фейковий PNG файл
+    image_bytes = io.BytesIO(b"fake image data")
+    files = {"file": ("avatar.png", image_bytes, "image/png")}
+
+    # Запит на завантаження аватарки
+    response = await client.post(
+        f"/api/users/{user.user_id}/avatar",
+        headers={"Authorization": f"Bearer {token}"},
+        files=files,
+    )
+
+    assert response.status_code == 200
+    assert "avatar_url" in response.json()
+    assert response.json()["avatar_url"].startswith("https://")
